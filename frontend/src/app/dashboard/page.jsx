@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // { type: 'user'|'room', id }
   const [messages, setMessages] = useState([]);
+  const [typingUsers, setTypingUsers] = useState({}); // { userId: boolean }
   const [input, setInput] = useState("");
   const endRef = useRef(null);
 
@@ -37,17 +38,28 @@ export default function DashboardPage() {
     const onMessage = (msg) => {
       setMessages((prev) => [...prev, msg]);
     };
+    const onTyping = (evt) => {
+      if (!evt?.userId || activeChat?.type !== 'user' && activeChat?.type !== 'room') return;
+      // Show typing if relevant to current chat context
+      if (activeChat?.type === 'user') {
+        if (evt.userId === activeChat.id) setTypingUsers((p) => ({ ...p, [evt.userId]: evt.isTyping }));
+      } else if (activeChat?.type === 'room') {
+        setTypingUsers((p) => ({ ...p, [evt.userId]: evt.isTyping }));
+      }
+    };
     const onSystem = (evt) => {
       // noop for now
       console.log("system", evt);
     };
     socket.on("message", onMessage);
+    socket.on("typing", onTyping);
     socket.on("system", onSystem);
     return () => {
       socket.off("message", onMessage);
+      socket.off("typing", onTyping);
       socket.off("system", onSystem);
     };
-  }, [socket]);
+  }, [socket, activeChat]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,6 +118,9 @@ export default function DashboardPage() {
               {m.content}
             </div>
           ))}
+          {Object.entries(typingUsers).some(([, v]) => v) && (
+            <div className="text-xs text-gray-500">Someone is typing…</div>
+          )}
           <div ref={endRef} />
         </div>
         <div className="p-3 border-t flex gap-2">
