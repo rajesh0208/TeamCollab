@@ -3,32 +3,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-type Role = "user" | "admin";
-
-type AuthUser = {
-  id: string;
-  email: string;
-  name: string;
-  role: Role;
-};
-
-type AuthContextValue = {
-  user: AuthUser | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  hasRole: (roles: Role[] | Role) => boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
-};
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const storedToken = typeof window !== "undefined" ? window.localStorage.getItem("tc_token") : null;
@@ -37,13 +18,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   }, []);
 
-  const persist = useCallback((nextToken: string, nextUser: AuthUser) => {
+  const persist = useCallback((nextToken, nextUser) => {
     setToken(nextToken);
     setUser(nextUser);
     if (typeof window !== "undefined") {
@@ -52,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email, password) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success("Logged in");
   }, [persist]);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
+  const signup = useCallback(async (name, email, password) => {
     const res = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,13 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const hasRole = useCallback((roles: Role[] | Role) => {
+  const hasRole = useCallback((roles) => {
     if (!user) return false;
     const arr = Array.isArray(roles) ? roles : [roles];
     return arr.includes(user.role);
   }, [user]);
 
-  const value = useMemo<AuthContextValue>(() => ({
+  const value = useMemo(() => ({
     user,
     token,
     isAuthenticated: Boolean(token && user),
