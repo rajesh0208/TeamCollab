@@ -74,5 +74,4 @@ gh repo create TeamCollab --public --source=. --remote=origin --push
 # git push -u origin main
 ```
 
-## License
-MIT
+
