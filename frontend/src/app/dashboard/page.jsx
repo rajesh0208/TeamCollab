@@ -36,7 +36,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!socket) return;
     const onMessage = (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => (prev.find((m) => m._id === msg._id) ? prev : [...prev, msg]));
     };
     const onTyping = (evt) => {
       if (!evt?.userId || activeChat?.type !== 'user' && activeChat?.type !== 'room') return;
@@ -82,9 +82,8 @@ export default function DashboardPage() {
     const payload = activeChat.type === "user"
       ? { content: input.trim(), toUserId: activeChat.id }
       : { content: input.trim(), roomId: activeChat.id };
-    socket.emit("message", payload, (ack) => {
-      if (ack?.ok && ack.message) setMessages((prev) => [...prev, ack.message]);
-    });
+    // Let the server broadcast the created message; avoid double-adding
+    socket.emit("message", payload);
     setInput("");
   };
 
