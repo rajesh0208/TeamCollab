@@ -3,8 +3,8 @@
 A full-stack collaboration app with a Node/Express backend and Next.js frontend.
 
 ## Tech Stack
-- Backend: Node.js, Express, JWT, MongoDB (via Mongoose)
-- Frontend: Next.js (App Router), React, TypeScript (for UI components), Tailwind CSS
+- Backend: Node.js, Express, JWT, MongoDB (via Mongoose), Socket.IO
+- Frontend: Next.js (App Router), React, Tailwind CSS, Socket.IO Client, DnD Kit
 - Tooling: ESLint, PostCSS
 
 ## Project Structure
@@ -55,6 +55,44 @@ Frontend defaults to `http://localhost:3000`.
 ```bash
 cd frontend && npm run lint
 ```
+
+## Messaging (Phase 2)
+- Real-time private and group chat using Socket.IO
+- JWT auth on socket handshake; messages persisted in MongoDB
+- Endpoints: `GET /api/chat/users`, `GET /api/chat/rooms`, `POST /api/chat/rooms`, `GET /api/chat/messages`
+- Socket events: `message`, `typing`, `read`, `join`, `leave`
+
+Frontend: See `src/app/dashboard/page.jsx` for the chat UI and `src/context/SocketContext.jsx` for socket connection.
+
+## Tasks (Phase 3) – Kanban Board
+- Kanban board at `/kanban` with columns: To Do, In Progress, Done
+- Drag-and-drop via `@dnd-kit/core` and `@dnd-kit/sortable`
+- Real-time task updates broadcast via Socket.IO
+
+### Task Model
+```
+{
+  title: String,
+  description: String,
+  status: "todo" | "in-progress" | "done",
+  priority: "low" | "medium" | "high",
+  dueDate: Date,
+  assignee: ObjectId(User),
+  createdBy: ObjectId(User),
+  createdAt: Date
+}
+```
+
+### APIs
+- `GET /api/tasks` — list tasks
+- `POST /api/tasks` — create task
+- `PUT /api/tasks/:id` — update task (status, priority, assignee, etc.)
+- `DELETE /api/tasks/:id` — delete task (creator or admin only)
+
+### Socket Events
+- `taskCreated`, `taskUpdated`, `taskDeleted`
+
+Frontend: See `src/app/kanban/page.jsx` for the board and modal.
 
 ## GitHub Setup and Push
 ```bash
