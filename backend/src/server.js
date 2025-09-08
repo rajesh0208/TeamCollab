@@ -2,7 +2,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { port, jwtSecret } = require('./config/env');
+const express = require('express');
 const app = require('./app');
+const { tasksRouter } = require('./routes/tasks');
 const { connectToDatabase } = require('./utils/db');
 const { registerSocketHandlers } = require('./socket');
 
@@ -39,6 +41,15 @@ async function bootstrap() {
   });
 
   registerSocketHandlers(io);
+
+  // Mount tasks router with access to io
+  app.use('/api/tasks', (req, res, next) => {
+    // Lazily create a router bound to io once
+    if (!app.locals.tasksRouter) {
+      app.locals.tasksRouter = tasksRouter(io);
+    }
+    return app.locals.tasksRouter(req, res, next);
+  });
 
   httpServer.listen(port, () => {
     console.log(`API and WebSocket listening on http://localhost:${port}`);
